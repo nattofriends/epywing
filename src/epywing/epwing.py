@@ -486,14 +486,17 @@ class EpwingBook(object):
 
 if __name__ == "__main__":
 
-    dict_path = './tests/taishukan/'
+    #dict_path = './tests/taishukan/'
+    dict_path = '/home/illabout/temp/jp-dicts/JJ - Daijirin'
     eb_initialize_library()
     #with EpwingBook(dict_path) as my_dict:
     my_dict = EpwingBook(dict_path)
         #/home/alex/dictionaries/chujiten/')
+    print my_dict.name
+    print my_dict.subbooks[0]["name"]
 
     #for h, c, s, e, u in my_dict.search('test'):
-    for e in list(my_dict.search('test', search_method='prefix'))[:5]:
+    for e in list(my_dict.search(u"林檎", search_method='exact'))[:5]:
         #print e['heading']
         #print e['content']
         print e.heading
