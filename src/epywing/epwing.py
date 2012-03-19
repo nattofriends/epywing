@@ -165,7 +165,7 @@ class EpwingBook(object):
                 for result in self.search(query, subbook=subbook['id'], search_method=search_method, search_options=search_options):
                     yield result
             return
-        else:
+        if not subbook:
             subbook = int(self.subbook)
 
         self._set_subbook(subbook)
