@@ -157,6 +157,7 @@ class EpwingBook(object):
         Only set `subbook` if `self.subbook` is None (though it is not necessary - all subbooks will be 
         searched if both are None).
         '''
+        print "query is %s, subbook is %s" % (query, subbook)
         if not query:
             return
         if not self.subbook and not subbook:
@@ -206,9 +207,9 @@ class EpwingBook(object):
 
             data = self.gaiji_handler.replace_all_gaiji_tags(data)
 
-            if content_method != eb_read_heading:
-                data = self._fix_html_hacks(data)
-                data = self._fix_anchor_links(data)
+            #if content_method != eb_read_heading:
+            #    data = self._fix_html_hacks(data)
+            #    data = self._fix_anchor_links(data)
             return data
 
         container = Container()#debug_mode=True)
@@ -338,24 +339,24 @@ class EpwingBook(object):
     def _set_hooks(self, content_method):
         heading_hooks = [
             (EB_HOOK_INITIALIZE,          self._hook_initialize),
-            (EB_HOOK_BEGIN_SUBSCRIPT,     self._hook_tags),
-            (EB_HOOK_END_SUBSCRIPT,       self._hook_tags),
-            (EB_HOOK_BEGIN_SUPERSCRIPT,   self._hook_tags),
-            (EB_HOOK_END_SUPERSCRIPT,     self._hook_tags),
-            (EB_HOOK_BEGIN_EMPHASIS,      self._hook_tags),
-            (EB_HOOK_END_EMPHASIS,        self._hook_tags),
+            #(EB_HOOK_BEGIN_SUBSCRIPT,     self._hook_tags),
+            #(EB_HOOK_END_SUBSCRIPT,       self._hook_tags),
+            #(EB_HOOK_BEGIN_SUPERSCRIPT,   self._hook_tags),
+            #(EB_HOOK_END_SUPERSCRIPT,     self._hook_tags),
+            #(EB_HOOK_BEGIN_EMPHASIS,      self._hook_tags),
+            #(EB_HOOK_END_EMPHASIS,        self._hook_tags),
             (EB_HOOK_NARROW_FONT,         self._hook_font),
             (EB_HOOK_WIDE_FONT,           self._hook_font),
-            (EB_HOOK_BEGIN_DECORATION,    self._hook_tags),
-            (EB_HOOK_END_DECORATION,      self._hook_tags),
+            #(EB_HOOK_BEGIN_DECORATION,    self._hook_tags),
+            #(EB_HOOK_END_DECORATION,      self._hook_tags),
         ]
         text_hooks = heading_hooks + [
             (EB_HOOK_NEWLINE,             self._hook_new_line),
             (EB_HOOK_SET_INDENT,          self._hook_set_indent),
-            (EB_HOOK_BEGIN_KEYWORD,       self._hook_tags),
-            (EB_HOOK_END_KEYWORD,         self._hook_tags),
-            (EB_HOOK_BEGIN_REFERENCE,     self._hook_tags),
-            (EB_HOOK_END_REFERENCE,       self._hook_tags),
+            #(EB_HOOK_BEGIN_KEYWORD,       self._hook_tags),
+            #(EB_HOOK_END_KEYWORD,         self._hook_tags),
+            #(EB_HOOK_BEGIN_REFERENCE,     self._hook_tags),
+            #(EB_HOOK_END_REFERENCE,       self._hook_tags),
             #(EB_HOOK_BEGIN_NARROW,        self._hook_tags),
             #(EB_HOOK_END_NARROW,          self._hook_tags),
         ]
@@ -374,7 +375,7 @@ class EpwingBook(object):
     #hooks
     #FIXME 'horsey' in chujiten is messed up, see ebview for correct one
     def _hook_new_line(self, book, appendix, container, code, argv):
-        self._write_text('<br/>\n')
+        self._write_text('\n')
         return EB_SUCCESS
 
     def _hook_set_indent(self, book, appendix, container, code, argv):
@@ -400,7 +401,7 @@ class EpwingBook(object):
                 self._write_text(container.EARLY_ENTRY_TERMINATOR)
 
         padding_width = 10 * int(argv[1]) #TODO refactor indentation padding constant
-        self._write_text(u'<hack_indent style=\"padding-left:{0}\"/>'.format(padding_width))
+        #self._write_text(u'<hack_indent style=\"padding-left:{0}\"/>'.format(padding_width))
         return EB_SUCCESS
 
     #TODO set_indent hook
