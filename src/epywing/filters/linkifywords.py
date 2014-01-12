@@ -28,7 +28,6 @@ class LinkifyWordsFilter(BookFilter):
     def filter_text(self, entry, text):
         '''`books` is a list of all books to search in when linkifying the entry's text.
         '''
-        print self.book.manager
         if hasattr(self.book, 'manager') and self.book.manager is not None:
             self.book_manager = self.book.manager
         else:
@@ -135,4 +134,4 @@ class LinkifyWordsFilter(BookFilter):
         return text
 
 
-            
+
