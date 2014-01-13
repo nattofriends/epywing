@@ -1,16 +1,16 @@
 # -*- coding: utf-8 -*-
-from itertools import islice
+from collections import namedtuple
+
 from epywing.bookfilter import BookFilter
 from epywing.utils.mecab import MecabTokenizer, TextBlobTokenizer
 from epywing.utils.punctuation import punctuation_and_numbers_regex
 from lxml import etree, html
-from StringIO import StringIO
-import string
-import re
 import lxml.html
 import cgi
 
 # Linkify vocab words that have exact matches in the given entry.
+
+Replacement = namedtuple('Replacement', ['offset', 'start', 'surface', 'search_reading'])
 
 # Use multiple tokenizers for multiple languages.
 mecab = MecabTokenizer()
@@ -26,7 +26,7 @@ class LinkifyWordsFilter(BookFilter):
     '''
     #link_template = u'[a href="{url}"]{text}[/a]'
     #link_template = u'<a href="url">{text}</a>'
-    link_template = u'<span class="searchable-word" onclick="search(this);">{text}</span>'
+    link_template = u'<span class="searchable-word" onclick="search({search_reading});">{text}</span>'
 
     def filter_text(self, entry, text):
         '''`books` is a list of all books to search in when linkifying the entry's text.
@@ -116,10 +116,12 @@ class LinkifyWordsFilter(BookFilter):
 
                     # only check this word if it's not punctuation
                     if not self._is_all_punctuation(word.surface) \
-                    and self._exact_match_exists(word.surface) \
                     and word.eligible:
                         # match found - we'll add the link later
-                        link_positions.append((offset, start))
+                        if self._exact_match_exists(word.surface):
+                            link_positions.append(Replacement(offset, start, word.surface, word.surface))
+                        elif self._exact_match_exists(word.reading):
+                            link_positions.append(Replacement(offset, start, word.surface, word.reading))
                 except ValueError:
                     continue
 
@@ -130,10 +132,10 @@ class LinkifyWordsFilter(BookFilter):
         # of inserted text, so subsequent link positions are accurate
         offset = 0
         for position in sorted(link_positions):
-            from_ = position[0] + offset
-            to = position[1] + offset
+            from_ = position.offset + offset
+            to = position.start + offset
             word = text[from_:to]
-            replacement = self.link_template.format(text=word)
+            replacement = self.link_template.format(text=position.surface, search_reading=position.search_reading)
             text = u''.join([text[:from_], replacement, text[to:]])
             offset += len(replacement) - len(word)
 
