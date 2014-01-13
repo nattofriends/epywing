@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from itertools import islice
 from epywing.bookfilter import BookFilter
-from epywing.utils.mecab import Wakati
+from epywing.utils.mecab import MecabTokenizer, TextBlobTokenizer
 from epywing.utils.punctuation import punctuation_and_numbers_regex
 from lxml import etree, html
 from StringIO import StringIO
@@ -12,7 +12,10 @@ import cgi
 
 # Linkify vocab words that have exact matches in the given entry.
 
-wakati = Wakati()
+# Use multiple tokenizers for multiple languages.
+mecab = MecabTokenizer()
+textblob = TextBlobTokenizer()
+tokenizers = [mecab, textblob]
 
 # this must be set
 book_manager = None
@@ -92,30 +95,33 @@ class LinkifyWordsFilter(BookFilter):
         '''
         `text` should not contain any HTML
         '''
-        words = wakati.split(text)
-        if not words:
+        words_by_tokenizer = [tokenizer.split(text) for tokenizer in tokenizers]
+        if not any(words_by_tokenizer):
             return text
 
         # ignore words that might be HTML entries
         #TODO this is required because of a hack
-        html_entities = [u'lt', u'gt']
-        words = filter(lambda w: w not in html_entities, words)
+        html_entities = (u'lt', u'gt')
+        for i, words in enumerate(words_by_tokenizer):
+            words_by_tokenizer[i] = filter(lambda word: word.surface not in html_entities, words)
 
-        # find each split word in the original text and linkify if needed
-        start = 0
         link_positions = []
-        for index, word in enumerate(words):
-            try:
-                offset = text.index(word, start)
-                start = offset + len(word)
+        for words in words_by_tokenizer:
+            # find each split word in the original text and linkify if needed
+            start = 0
+            for index, word in enumerate(words):
+                try:
+                    offset = text.index(word.surface, start)
+                    start = offset + len(word.surface)
 
-                # only check this word if it's not punctuation
-                if not self._is_all_punctuation(word) \
-                        and self._exact_match_exists(word):
-                    # match found - we'll add the link later
-                    link_positions.append((offset, start,))
-            except ValueError:
-                continue
+                    # only check this word if it's not punctuation
+                    if not self._is_all_punctuation(word.surface) \
+                    and self._exact_match_exists(word.surface) \
+                    and word.eligible:
+                        # match found - we'll add the link later
+                        link_positions.append((offset, start))
+                except ValueError:
+                    continue
 
         if not link_positions:
             return text
@@ -123,7 +129,7 @@ class LinkifyWordsFilter(BookFilter):
         # when we insert a link, increase the offset by the amount
         # of inserted text, so subsequent link positions are accurate
         offset = 0
-        for position in link_positions:
+        for position in sorted(link_positions):
             from_ = position[0] + offset
             to = position[1] + offset
             word = text[from_:to]

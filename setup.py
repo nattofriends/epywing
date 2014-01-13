@@ -16,6 +16,8 @@ setup(name='epywing',
     install_requires=[
        'lxml>=2.2.4',
        'ebmodule>=2.2',
+       'mecab-python>=0.996',
+       'textblob>=0.8.3',
     ]
 )
 
