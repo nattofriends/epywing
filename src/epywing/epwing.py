@@ -20,7 +20,7 @@ from epwingentry import Entry
 #EB API reference http://www.sra.co.jp/people/m-kasahr/eb/doc/eb-09.html
 
 
-         
+
 
 class Container(object):
     '''To share state in Epwing parser callbacks.
@@ -82,7 +82,7 @@ class EpwingBook(object):
     #def __enter__(self):_html_escape_left
     #    eb_initialize_library()
     #    return self
-    
+
     #def __exit__(self, type, value, traceback):
     #    eb_finalize_library()
 
@@ -154,7 +154,7 @@ class EpwingBook(object):
 
     def search(self, query, subbook=None, search_method='exact', search_options=None):
         '''Searches this book and yields matching entries.
-        Only set `subbook` if `self.subbook` is None (though it is not necessary - all subbooks will be 
+        Only set `subbook` if `self.subbook` is None (though it is not necessary - all subbooks will be
         searched if both are None).
         '''
         if not query:
@@ -262,7 +262,7 @@ class EpwingBook(object):
 
         if data:
             yield clean_data(data)
-    
+
     def _fix_anchor_links(self, text):
         '''If a reference links to a position within the entries already loaded,
         then its link will be rewritten to point to the named anchor.
@@ -274,19 +274,19 @@ class EpwingBook(object):
                 reference.attrib['href'] = '#' + reference.attrib['href']
             else:
                 reference.attrib['href'] = self.uri_dispatcher.uri_base + reference.attrib['href']
-        return html.tostring(doc)
+        return html.tostring(doc, encoding=unicode)
 
     def _fix_html_hacks(self, text):
         text = u'<div>{0}</div>'.format(text)
         doc = html.fromstring(text)
-        
+
         # rewrite attributes
         for hack_tag in doc.cssselect('hack_attribs'):
             prev_tag = hack_tag.getprevious()
             attribs = dict((key, val) for key, val in hack_tag.attrib.items())
             prev_tag.attrib.update(attribs)
             hack_tag.drop_tag()
-        
+
         # fix indentation divs
         hack_divs = doc.cssselect('hack_indent')
         to_drop = []
@@ -298,7 +298,7 @@ class EpwingBook(object):
             hack_div.drop_tag()
             indent_div.text = indent_div.tail
             indent_div.tail = ''
-        
+
             for sibling in indent_div.itersiblings():
                 if sibling.tag == 'hack_indent':
                     # merge identical ident divs
@@ -309,12 +309,12 @@ class EpwingBook(object):
                     else:
                         break
                 else:
-                    indent_div.append(sibling)        
+                    indent_div.append(sibling)
         # remove surrounding div #TODO find a better way
-        doc = html.tostring(doc)[5:]
+        doc = html.tostring(doc, encoding=unicode)[5:]
         doc = doc[:-6]
         return doc
-    
+
     _html_escape_left = '__MANABI_HTML_ESCAPE_LEFT__'
     _html_escape_right = '__MANABI_HTML_ESCAPE_RIGHT__'
 
@@ -394,7 +394,7 @@ class EpwingBook(object):
             # first indent level is considered a stop code,
             # since it only occurs at the beginning of an entry.
             container.indent_stop_code_count += 1
-            
+
             if container.read_count >= 1 or container.indent_stop_code_count > 1:
                 # an unfortunate hack, since sometimes the next entry begins midway through a read
                 self._write_text(container.EARLY_ENTRY_TERMINATOR)
