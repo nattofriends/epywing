@@ -18,6 +18,7 @@ setup(name='epywing',
        'ebmodule>=2.2',
        'mecab-python>=0.996',
        'textblob>=0.8.3',
+       'pillow>=2.3.0',
     ]
 )
 

@@ -75,6 +75,13 @@ class KenkyushaShinEiwaDaijiten6(BookTitle):
         return u'研究社　新英和大辞典　第６版' in self.book.name
 
 
+class KenkyushaShinWaeiDaijiten5(BookTitle):
+    categories = [JapaneseEnglish]
+
+    def matches(self):
+        return u'研究社　新和英大辞典　第５版' in self.book.name
+
+
 class KenkyushaReadersPlus(BookTitle):
     categories = [EnglishJapanese]
 

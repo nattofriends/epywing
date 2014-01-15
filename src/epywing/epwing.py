@@ -6,6 +6,8 @@ from os import path
 import string
 from lxml import html
 from lxml.cssselect import CSSSelector
+from cStringIO import StringIO
+from PIL import Image
 
 from mybase64 import urlsafe_b64_encode, urlsafe_b64_decode, _num_decode, _position_to_resource_id, _ENTRY_ID_SPLIT
 from uris import EpwingUriDispatcher
@@ -356,6 +358,10 @@ class EpwingBook(object):
             (EB_HOOK_END_KEYWORD,         self._hook_tags),
             (EB_HOOK_BEGIN_REFERENCE,     self._hook_tags),
             (EB_HOOK_END_REFERENCE,       self._hook_tags),
+            (EB_HOOK_BEGIN_COLOR_BMP,     self._hook_color),
+            (EB_HOOK_BEGIN_COLOR_JPEG,    self._hook_color),
+            (EB_HOOK_BEGIN_IN_COLOR_BMP,  self._hook_color),
+            (EB_HOOK_BEGIN_IN_COLOR_JPEG, self._hook_color),
             #(EB_HOOK_BEGIN_NARROW,        self._hook_tags),
             #(EB_HOOK_END_NARROW,          self._hook_tags),
         ]
@@ -481,7 +487,50 @@ class EpwingBook(object):
         self._write_text(self.gaiji_handler.tag(code, argv[0]))
         return EB_SUCCESS
 
+    def _hook_color(self, book, appendix, container, code, argv):
+        '''Unfortunately, displaying arbitrary images inline in base64 is too much to handle.
+        Resort to a file cache directory.
+        '''
 
+        extensions = {
+            EB_HOOK_BEGIN_COLOR_BMP: 'png',
+            EB_HOOK_BEGIN_IN_COLOR_BMP: 'png',
+            EB_HOOK_BEGIN_COLOR_JPEG: 'jpg',
+            EB_HOOK_BEGIN_IN_COLOR_JPEG: 'jpg',
+        }
+
+        _, _, page, offset = argv
+        eb_set_binary_color_graphic(self.book, (page, offset))
+
+        extension = extensions[code]
+
+        binary_parts = []
+
+        while True:
+            chunk = eb_read_binary(self.book, 0)
+            if len(chunk) == 0:
+                break
+            binary_parts.append(chunk)
+
+        binary = ''.join(binary_parts)
+
+        subbook_id = str(eb_subbook(self.book))
+        resource_id = _position_to_resource_id((page, offset))
+
+        img_path = self.uri_dispatcher.uri('image', subbook=subbook_id, image=resource_id, ext=extension) # for now
+
+        if not path.exists(img_path):
+            if extension == 'png':
+                src, dst = StringIO(binary), StringIO()
+                img = Image.open(src)
+                img.save(img_path)
+            elif extension == 'jpg':
+                with open(img_path, 'wb') as file:
+                    file.write(binary)
+
+        self._write_text(u'<div><img src="/{path}" /></div>'.format(path=img_path))
+
+        return EB_SUCCESS
 
 
 if __name__ == "__main__":
